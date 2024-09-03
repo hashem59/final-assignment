@@ -156,14 +156,14 @@ function setup() {
   video.hide();
   runFrames();
   // use rgb  color mode
-  colorMode(RGB);
+  //colorMode(RGB, 255);
 }
 
 function draw() {
   background(255);
   video.loadPixels();
   runningFrames.forEach((blob) => {
-    blob.show();
+    blob.draw();
   });
   // draw frames
 }
@@ -221,13 +221,11 @@ function runFrames() {
     console.log("hasSlider", hasSlider);
     const blob = new className(x, y, width, height, item.title, hasSlider);
     runningFrames.push(blob);
-    if (i > 12) break;
+    if (i > 9) break;
   }
 }
 
 function drawFrames() {}
-
-// Base class for all blobs
 class CustomBlob {
   constructor(x, y, w, h, title, hasSlider = false) {
     this.x = x;
@@ -235,6 +233,10 @@ class CustomBlob {
     this.w = w;
     this.h = h;
     this.title = title;
+    this.img = createImage(this.w, this.h);
+    this.imgOut = createImage(this.w, this.h);
+    console.log("imgIn", imgIn);
+    this.img.copy(imgIn, 0, 0, 355, 355, 0, 0, this.w, this.h);
     if (hasSlider) this.initSlider();
   }
 
@@ -246,21 +248,20 @@ class CustomBlob {
     this.threshold = this.thresholdSlider;
   }
 
-  fetchImage() {
-    this.img = createImage(this.w, this.h);
-    this.img.copy(imgIn, 0, 0, 355, 355, 0, 0, this.w, this.h);
+  applyFilters() {
+    return this.img;
+  }
+
+  draw() {
+    this.show();
   }
 
   show() {
-    if (!this.img) {
-      this.fetchImage();
-    }
-    // Draw the title and the buffer to the main canvas
     fill(0);
     rect(this.x, this.y, this.w, this.h);
     fill(0);
     textSize(12);
-    image(this.img, this.x, this.y, this.w, this.h);
+    image(this.applyFilters(), this.x, this.y, this.w, this.h);
     text(this.title, this.x + 0, this.y - 10);
   }
 }
@@ -270,26 +271,19 @@ class CameraStremBlob extends CustomBlob {
     super(x, y, w, h, title);
   }
 
-  show() {
-    super.fetchImage();
-    super.show();
+  draw() {
+    super.draw();
   }
 }
 
-// GreyscaleImage class that converts the video to greyscale and increases brightness
 class GreyscaleImage extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyGreyscale();
-    super.show();
-  }
-
-  applyGreyscale() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
@@ -302,399 +296,291 @@ class GreyscaleImage extends CustomBlob {
         brightness = constrain(brightness, 0, 255); // Ensure brightness is within bounds
 
         // Apply the greyscale value to all color channels
-        this.img.pixels[index + 0] = brightness;
-        this.img.pixels[index + 1] = brightness;
-        this.img.pixels[index + 2] = brightness;
+        this.imgOut.pixels[index + 0] = brightness;
+        this.imgOut.pixels[index + 1] = brightness;
+        this.imgOut.pixels[index + 2] = brightness;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3]; // Ensure alpha channel is maintained
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut; // Return the filtered image
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// RChannel class (already defined)
 class RChannel extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyRedChannel();
-    super.show();
-  }
-
-  applyRedChannel() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let r = this.img.pixels[index + 0];
-
-        // Apply the red channel to all color channels
-        this.img.pixels[index + 0] = r;
-        this.img.pixels[index + 1] = 0;
-        this.img.pixels[index + 2] = 0;
+        const r = this.img.pixels[index + 0];
+        const g = this.img.pixels[index + 1];
+        const b = this.img.pixels[index + 2];
+        this.imgOut.pixels[index + 0] = r;
+        this.imgOut.pixels[index + 1] = 0;
+        this.imgOut.pixels[index + 2] = 0;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// GChannel class (already defined)
 class GChannel extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyGreenChannel();
-    super.show();
-  }
-
-  applyGreenChannel() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let g = this.img.pixels[index + 1];
-
-        // Apply the green channel to all color channels
-        this.img.pixels[index + 0] = 0;
-        this.img.pixels[index + 1] = g;
-        this.img.pixels[index + 2] = 0;
+        const r = this.img.pixels[index + 0];
+        const g = this.img.pixels[index + 1];
+        const b = this.img.pixels[index + 2];
+        this.imgOut.pixels[index + 0] = 0;
+        this.imgOut.pixels[index + 1] = g;
+        this.imgOut.pixels[index + 2] = 0;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// BChannel class (already defined)
 class BChannel extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyBlueChannel();
-    super.show();
-  }
-
-  applyBlueChannel() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let b = this.img.pixels[index + 2];
-
-        // Apply the blue channel to all color channels
-        this.img.pixels[index + 0] = 0;
-        this.img.pixels[index + 1] = 0;
-        this.img.pixels[index + 2] = b;
+        const r = this.img.pixels[index + 0];
+        const g = this.img.pixels[index + 1];
+        const b = this.img.pixels[index + 2];
+        this.imgOut.pixels[index + 0] = 0;
+        this.imgOut.pixels[index + 1] = 0;
+        this.imgOut.pixels[index + 2] = b;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// RChannelThreshold class
 class RChannelThreshold extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyRedChannelThreshold();
-    super.show();
-  }
-
-  applyRedChannelThreshold() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
+    const threshold = this.threshold.value();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let r = this.img.pixels[index + 0];
-
-        // Apply the threshold to the red channel
-        if (r > this.threshold.value()) {
-          this.img.pixels[index + 0] = 255;
+        const r = this.img.pixels[index + 0];
+        if (r > threshold) {
+          this.imgOut.pixels[index + 0] = 255;
         } else {
-          this.img.pixels[index + 0] = 0;
+          this.imgOut.pixels[index + 0] = 0;
         }
-        this.img.pixels[index + 1] = 0;
-        this.img.pixels[index + 2] = 0;
+        this.imgOut.pixels[index + 1] = 0;
+        this.imgOut.pixels[index + 2] = 0;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// GChannelThreshold class
 class GChannelThreshold extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyGreenChannelThreshold();
-    super.show();
-  }
-
-  applyGreenChannelThreshold() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
+    const threshold = this.threshold.value();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let g = this.img.pixels[index + 1];
-
-        // Apply the threshold to the green channel
-        this.img.pixels[index + 0] = 0;
-        if (g > this.threshold.value()) {
-          this.img.pixels[index + 1] = 255;
+        const g = this.img.pixels[index + 1];
+        if (g > threshold) {
+          this.imgOut.pixels[index + 1] = 255;
         } else {
-          this.img.pixels[index + 1] = 0;
+          this.imgOut.pixels[index + 1] = 0;
         }
-        this.img.pixels[index + 2] = 0;
+        this.imgOut.pixels[index + 0] = 0;
+        this.imgOut.pixels[index + 2] = 0;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// BChannelThreshold class
 class BChannelThreshold extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyBlueChannelThreshold();
-    super.show();
-  }
-
-  applyBlueChannelThreshold() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
+    const threshold = this.threshold.value();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let b = this.img.pixels[index + 2];
-
-        // Apply the threshold to the blue channel
-        this.img.pixels[index + 0] = 0;
-        this.img.pixels[index + 1] = 0;
-        if (b > this.threshold.value()) {
-          this.img.pixels[index + 2] = 255;
+        const b = this.img.pixels[index + 2];
+        if (b > threshold) {
+          this.imgOut.pixels[index + 2] = 255;
         } else {
-          this.img.pixels[index + 2] = 0;
+          this.imgOut.pixels[index + 2] = 0;
         }
+        this.imgOut.pixels[index + 1] = 0;
+        this.imgOut.pixels[index + 0] = 0;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// RGBtoYCbCr class
 class RGBtoYCbCr extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyRGBtoYCbCr();
-    super.show();
-  }
-
-  applyRGBtoYCbCr() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let r = this.img.pixels[index + 0];
-        let g = this.img.pixels[index + 1];
-        let b = this.img.pixels[index + 2];
+        const r = this.img.pixels[index + 0];
+        const g = this.img.pixels[index + 1];
+        const b = this.img.pixels[index + 2];
 
-        // Apply the RGB to YCbCr conversion
+        /* 
+          Y0 = 0.299 ∗ R0 + 0.587 ∗ G0 + 0.114 ∗ B0
+          Cb = −0.169 ∗ R0 − 0.331 ∗ G0 + 0.500 ∗ B0
+          Cr = 0.500 ∗ R0 − 0.419 ∗ G0 − 0.081 ∗ B0 
+        */
+        /*         const y_ = 0.299 * r + 0.587 * g + 0.114 * b;
+        const cb = -0.169 * r - 0.331 * g + 0.5 * b;
+        const cr = 0.5 * r - 0.419 * g - 0.081 * b; */
         let y_ = 0.299 * r + 0.587 * g + 0.114 * b;
         let cb = -0.169 * r - 0.331 * g + 0.5 * b + 128;
         let cr = 0.5 * r - 0.419 * g - 0.081 * b + 128;
 
-        this.img.pixels[index + 0] = y_;
-        this.img.pixels[index + 1] = cb;
-        this.img.pixels[index + 2] = cr;
+        this.imgOut.pixels[index + 0] = y_;
+        this.imgOut.pixels[index + 1] = cb;
+        this.imgOut.pixels[index + 2] = cr;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
+  }
+
+  draw() {
+    super.draw();
   }
 }
 
-// RGBtoHSV class
-// RGBtoHSV class
 class RGBtoHSV extends CustomBlob {
   constructor(...atrrs) {
     super(...atrrs);
   }
 
-  show() {
-    super.fetchImage();
-    this.applyRGBtoHSV();
-    super.show();
-  }
-
-  applyRGBtoHSV() {
+  applyFilters() {
     this.img.loadPixels();
+    this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        let r = this.img.pixels[index + 0];
-        let g = this.img.pixels[index + 1];
-        let b = this.img.pixels[index + 2];
-
-        const [h, s, v] = this.RgbToHsv(r, g, b);
-        const [R, G, B] = this.hsvToRgb(h, s, v);
-        // Apply the RGB to HSV conversion
-        this.img.pixels[index + 0] = R;
-        this.img.pixels[index + 1] = G;
-        this.img.pixels[index + 2] = B;
-      }
-    }
-    this.img.updatePixels();
-  }
-
-  RgbToHsv(r, g, b) {
-    let max = Math.max(r, g, b);
-    let min = Math.min(r, g, b);
-    let delta = max - min;
-
-    let h, s, v;
-    s = delta / max;
-    v = max;
-    const r_ = (max - r) / delta;
-    const g_ = (max - g) / delta;
-    const b_ = (max - b) / delta;
-    if (s === 0) {
-      h = 0;
-      /* if saturation, S, is 0 (zero) then hue is undefined (i.e. the colour has no hue therefore it is monochrome) */
-    } else {
-      if (r === max && g === min) {
-        h = 5 + b_; // Case 1: R = max, G = min
-      } else if (r === max && g !== min) {
-        h = 1 - g_; // Case 2: R = max, G ≠ min
-      } else if (g === max && b === min) {
-        h = r; // Case 3: G = max, B = min
-      } else if (g === max && b !== min) {
-        h = 3 - b_; // Case 4: G = max, B ≠ min
-      } else if (r === max) {
-        h = 3 + g_; // Case 5: B = max
-      } else {
-        h = 5 - r_;
-      }
-    }
-    // Hue, H, is then converted to degrees by multiplying by 60 giving HSV with S and V between 0 and 1 and H between 0 and 360.
-    h = h * 60;
-
-    return [h, s, v];
-  }
-
-  hsvToRgb(h, s, v) {
-    var R, G, B;
-    /* 
-      To convert back from HSV to RGB first take Hue, H, in the range 0 to 360 and divide by 60:
-    */
-    const hex = h / 60;
-    /* 
-    Then the values of primary colour, secondary colour, a, b and c are calculated. 
-    the primary colour is the integer component of Hex (e.g. in C floor(Hex) ;
-   */
-    var a, b, c;
-    const primaryColor = Math.floor(h / 60);
-    const secondaryColor = hex - primaryColor;
-    a = v * (1 - s);
-    b = v * (1 - s * secondaryColor);
-    c = v * (1 - s * (1 - secondaryColor));
-
-    switch (primaryColor) {
-      case 0:
-        R = v;
-        G = c;
-        B = a;
-        break;
-      case 1:
-        R = b;
-        G = v;
-        B = a;
-        break;
-      case 2:
-        R = a;
-        G = v;
-        B = c;
-        break;
-      case 3:
-        R = a;
-        G = b;
-        B = v;
-        break;
-
-      case 4:
-        R = c;
-        G = a;
-        B = v;
-        break;
-      case 5:
-        R = v;
-        G = a;
-        B = b;
-        break;
-    }
-    return [R, G, B];
-  }
-}
-
-// RGBtoYCbCrThreshold class
-class RGBtoYCbCrThreshold extends CustomBlob {
-  constructor(...atrrs) {
-    super(...atrrs);
-  }
-
-  show() {
-    super.fetchImage();
-    this.applyRGBtoYCbCrThreshold();
-    super.show();
-  }
-
-  applyRGBtoYCbCrThreshold() {
-    this.img.loadPixels();
-    for (let y = 0; y < this.h; y++) {
-      for (let x = 0; x < this.w; x++) {
-        let index = (x + y * this.w) * 4;
-        let r = this.img.pixels[index + 0];
-        let g = this.img.pixels[index + 1];
-        let b = this.img.pixels[index + 2];
-
-        // Apply the RGB to YCbCr conversion
-        let yVal = 0.299 * r + 0.587 * g + 0.114 * b;
-        let cb = -0.169 * r - 0.331 * g + 0.5 * b + 128;
-        let cr = 0.5 * r - 0.419 * g - 0.081 * b + 128;
-
-        // Apply the threshold to the Y channel
-        if (yVal > this.threshold.value()) {
-          this.img.pixels[index + 0] = 255;
-        } else {
-          this.img.pixels[index + 0] = 0;
+        const r = this.img.pixels[index + 0];
+        const g = this.img.pixels[index + 1];
+        const b = this.img.pixels[index + 2];
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const v = max;
+        const delta = max - min;
+        let h = 0;
+        let s = 0;
+        if (max != 0) {
+          s = delta / max;
+          if (r == max) {
+            h = (g - b) / delta;
+          } else if (g == max) {
+            h = 2 + (b - r) / delta;
+          } else {
+            h = 4 + (r - g) / delta;
+          }
         }
-        this.img.pixels[index + 1] = 0;
-        this.img.pixels[index + 2] = 0;
+        h *= 60;
+        if (h < 0) {
+          h += 360;
+        }
+        this.imgOut.pixels[index + 0] = h;
+        this.imgOut.pixels[index + 1] = s;
+        this.imgOut.pixels[index + 2] = v;
+        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
       }
     }
-    this.img.updatePixels();
+    this.imgOut.updatePixels();
+    return this.imgOut;
   }
-}
 
-// RGBtoHSVThreshold class
-class RGBtoHSVThreshold extends CustomBlob {
-  //
+  draw() {
+    super.draw();
+  }
 }
