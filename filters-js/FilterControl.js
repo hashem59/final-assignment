@@ -32,17 +32,22 @@ export default class FilterControl {
   }
 
   draw() {
-    this.show();
-  }
-
-  show() {
     fill(0);
-    rect(this.x, this.y, this.w, this.h);
-    fill(0);
+    //rect(this.x, this.y, this.w, this.h);
     textSize(12);
     stroke(255);
-    image(this.applyFilters(), this.x, this.y, this.w, this.h);
+    // flip the video view
+    push();
+    //translate(width - (width - this.x), 0);
+    translate(width - (width - (this.x + this.w)), 0);
+    scale(-1, 1);
+    this.drawImg();
+    pop();
     text(this.title, this.x + 0, this.y - 10);
+  }
+
+  drawImg() {
+    image(this.applyFilters(), 0, this.y, this.w, this.h);
   }
 
   convolution(x, y, matrix, matrixSize, img) {

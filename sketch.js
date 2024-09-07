@@ -12,6 +12,7 @@ import {
   FaceDetectionAndBlur,
   RGBtoHSVThreshold,
   RGBtoYCbCrThreshold,
+  Extension,
 } from './filters-js/index.js';
 
 let debugImg,
@@ -46,6 +47,7 @@ const framesData = {
     { title: 'Face detection', component: FaceDetectionAndBlur },
     { title: 'RGB to YCbCr Threshold', component: RGBtoYCbCrThreshold },
     { title: 'RGB to HSV Threshold', component: RGBtoHSVThreshold },
+    { title: 'Extension', component: Extension },
   ],
 };
 
@@ -121,7 +123,7 @@ window.draw = function () {
     fill(0);
     textSize(12);
     text(snapshotName, 20, 90);
-    snapshotCheckbox.show();
+    snapshotCheckbox.print();
   }
 
   runningFrames.forEach((frame) => frame.draw());

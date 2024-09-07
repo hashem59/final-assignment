@@ -79,20 +79,21 @@ export default class FaceDetectionAndBlur extends FilterControl {
     }
   }
 
-  draw() {
-    text(this.title, this.x + 0, this.y - 10);
-    image(this.imgIn, this.x, this.y, this.w, this.h);
-    this.show();
+  drawImg() {
+    //text(this.title, this.x + 0, this.y - 10);
+    image(this.imgIn, 0, this.y, this.w, this.h);
+    this.print();
     if (!this.isReady) {
       fill(0, 150);
-      rect(this.x, this.y, this.w, this.h);
+      rect(0, this.y, this.w, this.h);
       fill(255);
       textSize(12);
+      pop();
       text('Loading...', this.x + this.w / 2 - 30, this.y + this.h / 2 + 10);
     }
   }
 
-  show() {
+  print() {
     if (this.detections.length > 0) {
       /* let points = this.detections[0].landmarks.positions;
       for (let i = 0; i < points.length; i++) {
@@ -130,7 +131,7 @@ export default class FaceDetectionAndBlur extends FilterControl {
       face.pixels[i + 2] = gray;
     }
     face.updatePixels();
-    image(face, _x + this.x, _y + this.y);
+    image(face, _x + 0, _y + this.y);
   }
 
   blurFilter({ face, _x, _y, _width, _height }) {
@@ -159,8 +160,7 @@ export default class FaceDetectionAndBlur extends FilterControl {
       }
     }
     face.updatePixels();
-    image(face, _x + this.x, _y + this.y);
-    //image(face, _x + this.x, _y + this.y + this.h);
+    image(face, _x + 0, _y + this.y);
   }
 
   pixelateFilter({ face, _x, _y, _width, _height }) {
@@ -197,7 +197,7 @@ export default class FaceDetectionAndBlur extends FilterControl {
     face.updatePixels();
 
     // Draw the pixelated face back on the main canvas
-    image(face, _x + this.x, _y + this.y);
+    image(face, _x + 0, _y + this.y);
   }
 
   getAverageColor(img, startX, startY, blockWidth, blockHeight) {
@@ -237,7 +237,7 @@ export default class FaceDetectionAndBlur extends FilterControl {
       face.pixels[i + 2] = gray;
     }
     face.updatePixels();
-    image(face, _x + this.x, _y + this.y);
+    image(face, _x + 0, _y + this.y);
   }
 }
 function convolution(x, y, matrix, matrixSize, img) {

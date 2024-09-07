@@ -12,6 +12,7 @@ import RGBtoHSV from './RGBtoHSV.js';
 import FaceDetectionAndBlur from './FaceDetectionAndBlur.js';
 import RGBtoYCbCrThreshold from './RGBtoYCbCrThreshold.js';
 import RGBtoHSVThreshold from './RGBtoHSVThreshold.js';
+import Extension from './Extension.js';
 export {
   FilterControl,
   BaseView,
@@ -27,4 +28,5 @@ export {
   FaceDetectionAndBlur,
   RGBtoYCbCrThreshold,
   RGBtoHSVThreshold,
+  Extension,
 };
