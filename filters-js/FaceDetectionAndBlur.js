@@ -1,25 +1,6 @@
-import FilterBase from './FilterBase.js';
-export default class FaceDetectionAndBlur extends FilterBase {
-  /* 
-    a. A greyscale image
-    b. A blurred image – adjust blurring so your face is not recognisable
-    c. A colour converted image – reuse code from task 9
-    d. A pixelate image. To perform pixelation use the following approach
-      i. Run step a – so that your image is greyscale
-      ii. Split the detected face image into 5x5 pixel blocks
-      iii. Calculate the average pixel intensity of each block using image.get(x,
-      y); or use the pixel array (to access each pixel’s intensity)
-      iv. Paint the entire block using the average pixel intensity. Utilise this
-      command: outimage.set(x, y, avePixInt); or use the pixel array
-      v. Loop through all blocks repeating steps iii and iv.
-  */
-  /* 
-  [2 points]: Face detection works using a bounding box
-  [1 point]: Replace the detected face image with a greyscale converted image
-  [1 point]: Replace the detected face image with a blurred image
-  [2 points]: Replace the detected face image with a colour converted image (check if task 9 is revisited)
-  [6 points]: Pixelate filter (check for nested loops, correct use of average)
- */
+import FilterControl from './FilterControl.js';
+
+export default class FaceDetectionAndBlur extends FilterControl {
   constructor(...attrs) {
     super(...attrs);
     this.detections = [];
@@ -28,24 +9,25 @@ export default class FaceDetectionAndBlur extends FilterBase {
       withExpressions: false,
       withDescriptors: false,
     };
+    this.options = ['Greyscale', 'Blur', 'RGBtoHSV', 'Pixelate', 'None'];
+    this.isReady = false;
 
-    this.faceapi = ml5.faceApi(this.video, faceOptions, this.faceReady.bind(this));
-    this.ready = false;
+    this.isVideo = this.imgIn?.elt?.tagName === 'VIDEO'; // check weather the this.imgIn is a video or image
+    this.faceapi = this.isVideo
+      ? ml5.faceApi(this.imgIn, faceOptions, this.modelReady.bind(this))
+      : ml5.faceApi(faceOptions, this.modelReady.bind(this));
 
-    this.faceapi.ready.then((res) => {
-      this.ready = true;
-    });
-    // add drop down selector for filters
-
-    const options = ['Blur', 'Greyscale', 'RGBtoHSV', 'Pixelate', 'None'];
-    this.select = createSelect();
-    this.select.position(this.x, this.y + this.h + 10);
-    options.forEach((option) => this.select.option(option));
+    this.drawOptions();
   }
 
   // Start detecting faces
-  faceReady() {
-    this.faceapi.detect(this.gotFaces.bind(this));
+  modelReady() {
+    this.isReady = true;
+    if (this.isVideo) {
+      this.faceapi.detect(this.gotFaces.bind(this));
+    } else {
+      this.faceapi.detect(this.imgIn, this.gotFaces.bind(this));
+    }
   }
 
   // Got faces
@@ -54,8 +36,17 @@ export default class FaceDetectionAndBlur extends FilterBase {
       console.log(error);
       return;
     }
+
     this.detections = result;
-    this.faceapi.detect(this.gotFaces.bind(this)); // Recursively call to continue detecting faces
+    if (this.isVideo) this.faceapi.detect(this.gotFaces.bind(this)); // Recursively call to continue detecting faces
+  }
+
+  drawOptions() {
+    this.select = createSelect();
+    this.select.position(this.x + this.w + 5, this.y + this.h);
+    this.select.style('transform', 'rotate(270deg)');
+    this.select.style('transform-origin', '0 0');
+    this.options.forEach((option) => this.select.option(option));
   }
 
   drawBoxs(detections) {
@@ -73,13 +64,26 @@ export default class FaceDetectionAndBlur extends FilterBase {
   }
 
   applyFilters() {
-    return this.img;
+    return this.imgIn;
+  }
+
+  keyPressed(event) {
+    let { key } = event.detail.event;
+    key = Number(key);
+    // check if it's a number
+    if (!isNaN(key)) {
+      const index = key - 1;
+      if (this.options[index]) {
+        this.select.value(this.options[index]);
+      }
+    }
   }
 
   draw() {
-    image(this.video, this.x, this.y, this.w, this.h);
+    text(this.title, this.x + 0, this.y - 10);
+    image(this.imgIn, this.x, this.y, this.w, this.h);
     this.show();
-    if (!this.ready) {
+    if (!this.isReady) {
       fill(0, 150);
       rect(this.x, this.y, this.w, this.h);
       fill(255);
@@ -103,7 +107,7 @@ export default class FaceDetectionAndBlur extends FilterBase {
       _y = Math.floor(_y);
       _width = Math.floor(_width);
       _height = Math.floor(_height);
-      const face = this.video.get(_x, _y, _width, _height);
+      const face = this.imgIn.get(_x, _y, _width, _height);
       const filterConfig = { face, _x, _y, _width, _height };
       if (this.select.value() === 'Greyscale') return this.grayscale(filterConfig);
       if (this.select.value() === 'Blur') return this.blurFilter(filterConfig);

@@ -1,7 +1,6 @@
-import FilterBase from "./FilterBase.js";
-export default class BaseView extends FilterBase {
+import FilterControl from './FilterControl.js';
+export default class BaseView extends FilterControl {
   constructor(...attrs) {
-    console.log("BaseView", ...attrs);
     super(...attrs);
   }
 

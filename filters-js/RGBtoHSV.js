@@ -1,31 +1,31 @@
-import FilterBase from "./FilterBase.js";
-export default class RGBtoHSV extends FilterBase {
+import FilterControl from './FilterControl.js';
+export default class RGBtoHSV extends FilterControl {
   constructor(...attrs) {
     super(...attrs);
   }
 
   applyFilters() {
-    this.img.loadPixels();
+    this.imgIn.loadPixels();
     this.imgOut.loadPixels();
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         let index = (x + y * this.w) * 4;
-        const { h, s, v } = this.rgbToHsv(
-          this.img.pixels[index + 0],
-          this.img.pixels[index + 1],
-          this.img.pixels[index + 2]
+        const { h, s, v } = window.RGBtoHSV.rgbToHsv(
+          this.imgIn.pixels[index + 0],
+          this.imgIn.pixels[index + 1],
+          this.imgIn.pixels[index + 2]
         );
         this.imgOut.pixels[index + 0] = map(h, 0, 360, 0, 255);
         this.imgOut.pixels[index + 1] = map(s, 0, 100, 0, 255);
         this.imgOut.pixels[index + 2] = map(v, 0, 100, 0, 255);
-        this.imgOut.pixels[index + 3] = this.img.pixels[index + 3];
+        this.imgOut.pixels[index + 3] = this.imgIn.pixels[index + 3];
       }
     }
     this.imgOut.updatePixels();
     return this.imgOut;
   }
 
-  rgbToHsv(R, G, B) {
+  static rgbToHsv(R, G, B) {
     // Normalize the RGB values to the range 0-1
     let r = R / 255;
     let g = G / 255;
@@ -65,3 +65,4 @@ export default class RGBtoHSV extends FilterBase {
     super.draw();
   }
 }
+window.RGBtoHSV = RGBtoHSV; // export RGBtoHSV class

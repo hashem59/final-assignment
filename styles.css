@@ -1,0 +1,23 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+canvas {
+  vertical-align: top;
+}
+
+button {
+  margin: 0;
+  padding: 5px;
+  font-size: 20px;
+  /* basic button styles */
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+}

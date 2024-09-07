@@ -1,15 +1,20 @@
-export default class FilterBase {
+export default class FilterControl {
   constructor({ x, y, w, h, title, hasSlider = false, imgIn, video }) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
     this.title = title;
-    if (video) this.video = video;
-    this.img = createImage(this.w, this.h);
     this.imgOut = createImage(this.w, this.h);
-    this.img.copy(imgIn, 0, 0, 355, 355, 0, 0, this.w, this.h);
+    this.imgIn = imgIn;
     if (hasSlider) this.initSlider();
+    document.addEventListener('keyPressed', this.keyPressed.bind(this));
+  }
+
+  disconnect() {
+    document.removeEventListener('keyPressed', this.keyPressed.bind(this));
+    // remove the slider if exists
+    if (this.thresholdSlider) this.thresholdSlider.remove();
   }
 
   initSlider() {
@@ -20,8 +25,10 @@ export default class FilterBase {
     this.threshold = this.thresholdSlider;
   }
 
+  keyPressed(event) {}
+
   applyFilters() {
-    return this.img;
+    return this.imgIn;
   }
 
   draw() {
