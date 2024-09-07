@@ -86,21 +86,15 @@ export default class FaceDetectionAndBlur extends FilterControl {
     if (!this.isReady) {
       fill(0, 150);
       rect(0, this.y, this.w, this.h);
+      pop();
       fill(255);
       textSize(12);
-      pop();
-      text('Loading...', this.x + this.w / 2 - 30, this.y + this.h / 2 + 10);
+      const txt = text('Loading...', this.x + this.w / 2 - 30, this.y + this.h / 2 + 10);
     }
   }
 
   print() {
     if (this.detections.length > 0) {
-      /* let points = this.detections[0].landmarks.positions;
-      for (let i = 0; i < points.length; i++) {
-        stroke(161, 95, 251);
-        strokeWeight(4);
-        point(points[i]._x + this.x, points[i]._y + this.y);
-      } */
       let { _x, _y, _width, _height } = this.detections[0].alignedRect._box;
 
       // Round the dimensions to ensure they are integers
