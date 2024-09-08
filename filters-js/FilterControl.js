@@ -33,16 +33,18 @@ export default class FilterControl {
 
   draw() {
     fill(0);
-    //rect(this.x, this.y, this.w, this.h);
     textSize(12);
     stroke(255);
     // flip the video view
     push();
-    //translate(width - (width - this.x), 0);
     translate(width - (width - (this.x + this.w)), 0);
     scale(-1, 1);
     this.drawImg();
     pop();
+    this.drawText();
+  }
+
+  drawText() {
     text(this.title, this.x + 0, this.y - 10);
   }
 

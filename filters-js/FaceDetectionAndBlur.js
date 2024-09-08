@@ -58,7 +58,7 @@ export default class FaceDetectionAndBlur extends FilterControl {
         strokeWeight(1);
         noFill();
         const offset = 4;
-        rect(_x + this.x - offset / 2, _y + this.y - offset / 2, _width + offset, _height + offset);
+        rect(_x + 0 - offset / 2, _y + this.y - offset / 2, _width + offset, _height + offset);
       }
     }
   }
@@ -80,16 +80,20 @@ export default class FaceDetectionAndBlur extends FilterControl {
   }
 
   drawImg() {
-    //text(this.title, this.x + 0, this.y - 10);
     image(this.imgIn, 0, this.y, this.w, this.h);
     this.print();
     if (!this.isReady) {
       fill(0, 150);
       rect(0, this.y, this.w, this.h);
-      pop();
+    }
+  }
+
+  drawText() {
+    super.drawText();
+    if (!this.isReady) {
       fill(255);
       textSize(12);
-      const txt = text('Loading...', this.x + this.w / 2 - 30, this.y + this.h / 2 + 10);
+      text('Loading...', this.x + this.w / 2 - 30, this.y + this.h / 2 + 10);
     }
   }
 
@@ -138,13 +142,13 @@ export default class FaceDetectionAndBlur extends FilterControl {
     face.loadPixels();
 
     var matrixSize = matrix.length;
-    var blurPasses = 8;
+    var blurPasses = 10;
     for (let i = 0; i < blurPasses; i++) {
       // read every pixel
       for (var x = 3; x < face.width - 3; x++) {
         for (var y = 3; y < face.height - 3; y++) {
           var index = (x + y * face.width) * 4;
-          var c = convolution(x, y, matrix, matrixSize, face);
+          var c = this.convolution(x, y, matrix, matrixSize, face);
 
           face.pixels[index + 0] = c[0];
           face.pixels[index + 1] = c[1];
@@ -219,43 +223,15 @@ export default class FaceDetectionAndBlur extends FilterControl {
   }
 
   RGBtoHSV({ face, _x, _y, _width, _height }) {
-    // apply custom gray filter by looping through each pixel
+    // make use if window.RGBtoHSV.rgbToHsv function
     face.loadPixels();
     for (let i = 0; i < face.pixels.length; i += 4) {
-      let r = face.pixels[i];
-      let g = face.pixels[i + 1];
-      let b = face.pixels[i + 2];
-      let gray = (r + g + b) / 3;
-      face.pixels[i] = gray;
-      face.pixels[i + 1] = gray;
-      face.pixels[i + 2] = gray;
+      let { h, s, v } = window.RGBtoHSV.rgbToHsv(face.pixels[i], face.pixels[i + 1], face.pixels[i + 2]);
+      face.pixels[i] = map(h, 0, 360, 0, 255);
+      face.pixels[i + 1] = map(s, 0, 100, 0, 255);
+      face.pixels[i + 2] = map(v, 0, 100, 0, 255);
     }
     face.updatePixels();
     image(face, _x + 0, _y + this.y);
   }
-}
-function convolution(x, y, matrix, matrixSize, img) {
-  var totalRed = 0.0;
-  var totalGreen = 0.0;
-  var totalBlue = 0.0;
-  var offset = floor(matrixSize / 2);
-
-  // convolution matrix loop
-  for (var i = 0; i < matrixSize; i++) {
-    for (var j = 0; j < matrixSize; j++) {
-      // Get pixel loc within convolution matrix
-      var xloc = x + i - offset;
-      var yloc = y + j - offset;
-      var index = (xloc + img.width * yloc) * 4;
-      // ensure we don't address a pixel that doesn't exist
-      index = constrain(index, 0, img.pixels.length - 1);
-
-      // multiply all values with the mask and sum up
-      totalRed += img.pixels[index + 0] * matrix[i][j];
-      totalGreen += img.pixels[index + 1] * matrix[i][j];
-      totalBlue += img.pixels[index + 2] * matrix[i][j];
-    }
-  }
-  // return the new color
-  return [totalRed, totalGreen, totalBlue];
 }
