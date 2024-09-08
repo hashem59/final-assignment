@@ -181,9 +181,9 @@ export default class GreyscaleImage extends FilterControl {
     if (isOpen && areFingersInOrder && !this.isHandUp) {
       this.handWasRaisedAt = performance.now();
       this.isHandUp = true;
-      console.log('Hand is up');
+      //console.log('Hand is up');
     } else if (this.isHandUp && !(isOpen && areFingersInOrder)) {
-      console.log('Hand is down');
+      ///console.log('Hand is down');
       this.isHandUp = false;
       this.handWasRaisedAt = null;
     }
